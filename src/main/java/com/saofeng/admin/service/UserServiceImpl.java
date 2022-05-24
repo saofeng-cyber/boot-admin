@@ -5,10 +5,13 @@ import com.saofeng.admin.mapper.UserMapper;
 import com.saofeng.admin.pojo.UserInfo;
 import com.saofeng.admin.service.impl.UserService;
 import com.saofeng.admin.utils.DigestPassword;
+import com.saofeng.admin.utils.JwtUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -44,6 +47,10 @@ public class UserServiceImpl implements UserService {
             return jsonObject;
         }
         System.out.println(md5password);
+        Map<String,String> map = new HashMap<>();
+        map.put("username", username);
+        String token = JwtUtils.createToken(map);
+        result.setToken(token);
         Date date = new Date();
         userInfo.setCreateTime(date);
         jsonObject.put("success", "true");
