@@ -4,8 +4,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.saofeng.admin.mapper.UserMapper;
 import com.saofeng.admin.pojo.UserInfo;
 import com.saofeng.admin.service.impl.UserService;
-import com.saofeng.admin.utils.DigestPassword;
 import com.saofeng.admin.utils.JwtUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -13,11 +13,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserServiceImpl implements UserService {
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public JSONObject selectByUser(UserInfo userInfo) {
         JSONObject jsonObject = new JSONObject();
@@ -29,29 +33,17 @@ public class UserServiceImpl implements UserService {
             jsonObject.put("msg", "用户不存在,请先注册");
             return jsonObject;
         }
-        if ("".equals(username)) {
+        if (username.isBlank() || password.isBlank()) {
             jsonObject.put("success", "failed");
-            jsonObject.put("msg", "用户名不能为空");
+            jsonObject.put("msg", "用户名或密码不能为空");
             return jsonObject;
         }
-        if ("".equals(password)) {
-            jsonObject.put("success", "failed");
-            jsonObject.put("msg", "密码不能为空");
-            return jsonObject;
-        }
-        String salt = result.getSalt();
-        String md5password = DigestPassword.getMd5Password(salt, password);
-        if (!md5password.equals(result.getPassword())) {
-            jsonObject.put("success", "failed");
-            jsonObject.put("msg", "密码不正确，请重新输入");
-            return jsonObject;
-        }
-        System.out.println(md5password);
-        Map<String,String> map = new HashMap<>();
-        map.put("username", username);
-        String token = JwtUtils.createToken(map);
-        result.setToken(token);
+        Integer uuid = result.getUid();
         Date date = new Date();
+        String token = JwtUtils.createToken(uuid, username);
+        stringRedisTemplate.opsForValue().set("token", token, 60, TimeUnit.SECONDS);
+        updateToken(uuid, token);
+        result.setToken(token);
         userInfo.setCreateTime(date);
         jsonObject.put("success", "true");
         jsonObject.put("userInfo", result);
@@ -62,8 +54,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public JSONObject addUser(UserInfo userInfo) {
         String salt = UUID.randomUUID().toString().toUpperCase();
-        String password = userInfo.getPassword();
-        userInfo.setPassword(DigestPassword.getMd5Password(salt, password));
         JSONObject jsonObject = new JSONObject();
         Date date = new Date();
         userInfo.setSalt(salt);
@@ -73,6 +63,20 @@ public class UserServiceImpl implements UserService {
             jsonObject.put("success", "true");
             jsonObject.put("userInfo", userInfo);
         }
+        return jsonObject;
+    }
+
+    @Override
+    public JSONObject updateToken(Integer uuid, String token) {
+        Integer integer = userMapper.updateToken(uuid, token);
+        JSONObject jsonObject = new JSONObject();
+        if (integer > 0) {
+            jsonObject.put("success", "true");
+            jsonObject.put("msg", "token更新成功");
+            return jsonObject;
+        }
+        jsonObject.put("success", "failed");
+        jsonObject.put("msg", "token更新失败");
         return jsonObject;
     }
 }

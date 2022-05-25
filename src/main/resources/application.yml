@@ -1,16 +1,5 @@
-server:
-  port: 8088
 spring:
   application:
-    name: boot-admin-3.0.0
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: "jdbc:mysql://localhost:3306/saofeng-admin?characterEncoding=UTF-8&useSSL=false&useUnicode=true&serverTimezone=GMT%2b8"
-    username: root
-    password: 1314521sun
-mybatis:
-  mapper-locations: classpath:mapper/*.xml
-jwt:
-  secret:saofeng@lovedongjie
-  issue:SAOFENG
-  expireDate:86400
+    name: saofeng-admin
+  profiles:
+    active: dev

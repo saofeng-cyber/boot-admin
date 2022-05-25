@@ -10,4 +10,5 @@ import java.util.List;
 public interface UserMapper {
     UserInfo selectByUsername(@Param("username") String username);
     Integer addUser(UserInfo userInfo);
+    Integer updateToken(@Param("uuid") Integer uuid,@Param("token") String token);
 }
