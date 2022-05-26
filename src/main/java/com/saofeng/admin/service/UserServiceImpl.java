@@ -5,16 +5,16 @@ import com.saofeng.admin.mapper.UserMapper;
 import com.saofeng.admin.pojo.UserInfo;
 import com.saofeng.admin.service.impl.UserService;
 import com.saofeng.admin.utils.JwtUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
     @Resource
@@ -31,23 +31,26 @@ public class UserServiceImpl implements UserService {
         if (result == null) {
             jsonObject.put("success", "failed");
             jsonObject.put("msg", "用户不存在,请先注册");
+            log.error(String.valueOf(jsonObject));
             return jsonObject;
         }
         if (username.isBlank() || password.isBlank()) {
             jsonObject.put("success", "failed");
             jsonObject.put("msg", "用户名或密码不能为空");
+            log.error(String.valueOf(jsonObject));
             return jsonObject;
         }
         Integer uuid = result.getUid();
         Date date = new Date();
         String token = JwtUtils.createToken(uuid, username);
-        stringRedisTemplate.opsForValue().set("token", token, 60, TimeUnit.SECONDS);
+//        stringRedisTemplate.opsForValue().set("token", token, 60, TimeUnit.SECONDS);
         updateToken(uuid, token);
         result.setToken(token);
         userInfo.setCreateTime(date);
         jsonObject.put("success", "true");
         jsonObject.put("userInfo", result);
         jsonObject.put("msg", "登录成功");
+        log.info(String.valueOf(jsonObject));
         return jsonObject;
     }
 
@@ -63,6 +66,7 @@ public class UserServiceImpl implements UserService {
             jsonObject.put("success", "true");
             jsonObject.put("userInfo", userInfo);
         }
+        log.error(String.valueOf(jsonObject));
         return jsonObject;
     }
 
@@ -73,10 +77,12 @@ public class UserServiceImpl implements UserService {
         if (integer > 0) {
             jsonObject.put("success", "true");
             jsonObject.put("msg", "token更新成功");
+            log.info(String.valueOf(jsonObject));
             return jsonObject;
         }
         jsonObject.put("success", "failed");
         jsonObject.put("msg", "token更新失败");
+        log.error(String.valueOf(jsonObject));
         return jsonObject;
     }
 }

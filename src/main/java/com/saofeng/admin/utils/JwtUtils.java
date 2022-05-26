@@ -10,9 +10,11 @@ import com.auth0.jwt.exceptions.InvalidClaimException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Calendar;
 
+@Slf4j
 public class JwtUtils {
     public static final String key = "saofeng666";
 
@@ -31,18 +33,21 @@ public class JwtUtils {
         try {
             JWTVerifier jwtVerifier = JWT.require(algorithm).build();
             DecodedJWT verify = jwtVerifier.verify(token);
-            System.out.println(verify);
+            log.info(String.valueOf(verify));
             jsonObject.put("msg", "true");
             return jsonObject;
         } catch (SignatureVerificationException e) {
             //验证的签名不一致
             jsonObject.put("msg", "token签名不一致");
+            log.error("token签名不一致");
             return jsonObject;
         } catch (TokenExpiredException e) {
             jsonObject.put("msg", "token已过期");
+            log.error("token已过期");
             return jsonObject;
         } catch (AlgorithmMismatchException e) {
             jsonObject.put("msg", "签名算法不匹配");
+            log.error("签名算法不匹配");
             return jsonObject;
         } catch (InvalidClaimException e) {
             jsonObject.put("msg", "失效的payload异常");
